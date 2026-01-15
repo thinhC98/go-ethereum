@@ -364,8 +364,12 @@ func (p *Posv) GetMasternodesFromCheckpointHeader(preCheckpointHeader *types.Hea
 // CalcDifficulty is the difficulty adjustment algorithm. It returns the difficulty
 // that a new block should have based on the previous blocks in the chain and the
 // current signer.
-func (c *Posv) CalcDifficulty(chain consensus.ChainReader, time uint64, parent *types.Header) *big.Int {
-	return c.calcDifficulty(chain, parent, c.signer)
+func (c *Posv) CalcDifficulty(chain consensus.ChainHeaderReader, time uint64, parent *types.Header) *big.Int {
+	// Convert to local ChainReader interface for internal use
+	if cr, ok := chain.(ChainReader); ok {
+		return c.calcDifficulty(cr, parent, c.signer)
+	}
+	return big.NewInt(1)
 }
 
 func (p *Posv) calcDifficulty(chain ChainReader, parent *types.Header, creator common.Address) *big.Int {
@@ -794,7 +798,7 @@ func getM1M2(masternodes []common.Address, validators []int64, currentHeader *ty
 
 // APIs implements consensus.Engine, returning the user facing RPC API to allow
 // controlling the signer voting.
-func (c *Posv) APIs(chain consensus.ChainReader) []rpc.API {
+func (c *Posv) APIs(chain consensus.ChainHeaderReader) []rpc.API {
 	return []rpc.API{{
 		Namespace: "posv",
 		Version:   "1.0",
